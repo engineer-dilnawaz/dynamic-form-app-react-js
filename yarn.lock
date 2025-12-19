@@ -737,6 +737,13 @@
   dependencies:
     csstype "^3.2.2"
 
+"@types/uuid@^11.0.0":
+  version "11.0.0"
+  resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-11.0.0.tgz#f4fa34bbf2af941148ef1973c4361fc43617971c"
+  integrity sha512-HVyk8nj2m+jcFRNazzqyVKiZezyhDKrGUA3jlEcg/nZ6Ms+qHwocba1Y/AaVaznJTAM9xpdFSh+ptbNrhOGvZA==
+  dependencies:
+    uuid "*"
+
 "@typescript-eslint/eslint-plugin@8.50.0":
   version "8.50.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.50.0.tgz#a6ce899690542e2affa9543306d2d3935740abb7"
@@ -930,6 +937,11 @@ chalk@^4.0.0:
   dependencies:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
+
+clsx@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/clsx/-/clsx-2.1.1.tgz#eed397c9fd8bd882bfb18deab7102049a2f32999"
+  integrity sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==
 
 color-convert@^2.0.1:
   version "2.0.1"
@@ -1438,6 +1450,11 @@ lru-cache@^5.1.1:
   dependencies:
     yallist "^3.0.2"
 
+lucide-react@^0.562.0:
+  version "0.562.0"
+  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.562.0.tgz#217796c2f57624f012b484ea7f08505067c90d51"
+  integrity sha512-82hOAu7y0dbVuFfmO4bYF1XEwYk/mEbM5E+b1jgci/udUBEE/R7LF5Ip0CCEmXe8AybRM8L+04eP+LGZeDvkiw==
+
 magic-string@^0.30.21:
   version "0.30.21"
   resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.30.21.tgz#56763ec09a0fa8091df27879fd94d19078c00d91"
@@ -1568,7 +1585,14 @@ react-refresh@^0.18.0:
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.18.0.tgz#2dce97f4fe932a4d8142fa1630e475c1729c8062"
   integrity sha512-QgT5//D3jfjJb6Gsjxv0Slpj23ip+HtOpnNgnb2S5zU3CB26G/IDPGoy4RJB42wzFE46DRsstbW6tKHoKbhAxw==
 
-react-router@^7.11.0:
+react-router-dom@^7.11.0:
+  version "7.11.0"
+  resolved "https://registry.yarnpkg.com/react-router-dom/-/react-router-dom-7.11.0.tgz#2165f63e52798bd0eb138480c098ad058cdf3413"
+  integrity sha512-e49Ir/kMGRzFOOrYQBdoitq3ULigw4lKbAyKusnvtDu2t4dBX4AGYPrzNvorXmVuOyeakai6FUPW5MmibvVG8g==
+  dependencies:
+    react-router "7.11.0"
+
+react-router@7.11.0, react-router@^7.11.0:
   version "7.11.0"
   resolved "https://registry.yarnpkg.com/react-router/-/react-router-7.11.0.tgz#d3b91567fdbe910caf9064ea69b7b4d9264f2945"
   integrity sha512-uI4JkMmjbWCZc01WVP2cH7ZfSzH91JAZUDd7/nIprDgWxBV1TkkmLToFh7EbMTcMak8URFRa2YoBL/W8GWnCTQ==
@@ -1666,6 +1690,11 @@ supports-color@^7.1.0:
   dependencies:
     has-flag "^4.0.0"
 
+tailwind-merge@^3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/tailwind-merge/-/tailwind-merge-3.4.0.tgz#5a264e131a096879965f1175d11f8c36e6b64eca"
+  integrity sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==
+
 tailwindcss@4.1.18, tailwindcss@^4.1.18:
   version "4.1.18"
   resolved "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-4.1.18.tgz#f488ba47853abdb5354daf9679d3e7791fc4f4e3"
@@ -1735,6 +1764,11 @@ uri-js@^4.2.2:
   integrity sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==
   dependencies:
     punycode "^2.1.0"
+
+uuid@*, uuid@^13.0.0:
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-13.0.0.tgz#263dc341b19b4d755eb8fe36b78d95a6b65707e8"
+  integrity sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==
 
 vite@^7.2.4:
   version "7.3.0"

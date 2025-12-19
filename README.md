@@ -1,247 +1,132 @@
-## 🏗 Project Goal
+# Form-Builder IDE Agent (React + Vite Version)
 
-Build a **frontend-only React/Next.js application** where:
-
-* **Admin users can create categories**
-  (ex: Vehicles, Clothes, Electronics)
-* **Admin defines dynamic form schema**
-  by adding multiple properties:
-
-  * Property Name
-  * Data Type: `string | number | boolean | date | time`
-  * UI Type: `text_input | number_input | date_picker | time_picker | toggle | dropdown`
-  * Options array for dropdown
-* **Users can fill forms based on that schema**
-* All data is stored **locally in browser storage (LocalStorage)** using Zustand for state persistence.
-
-No backend required in MVP.
-
-Later we can replace LocalStorage with Supabase.
+This file guides an AI coding agent to help build a **Dynamic Schema-Driven Form Builder App**.
 
 ---
 
-## 🧱 Tech Stack
+## 🏗 Tech Stack
 
-* **React or Next.js**
-* **Zustand (global state + persistence)**
-* **React Hook Form (dynamic form engine)**
-* **TailwindCSS**
-* **Shadcn/UI Components (recommended)**
-* **TypeScript**
+* **Frontend:** React + Vite
+* **State:** Zustand
+* **Forms:** React Hook Form
+* **Styling:** TailwindCSS
+* **Storage (temporary):** LocalStorage
 
----
-
-## 🎯 Core Principles
-
-* 100% frontend
-* No authentication needed yet
-* Data persists using LocalStorage automatically
-* Admin UI updates schema stored locally
-* User UI renders dynamic inputs based on schema
+No backend yet. Data persistence is local.
 
 ---
 
-## 👥 Roles (Simulated)
+## 🎯 Core Idea
 
-We simulate roles:
+Two roles:
 
-### Admin:
+1. **Admin** defines a schema of fields
+2. **User** fills a form generated from that schema
 
-* Can add / edit categories
-* Can define properties per category
-* Can reorder fields (optional)
-* Can preview form
-
-### User:
-
-* Choose category
-* Fill form
-* Submit data
-* View their submitted entries
-
-No login required — we assume admin mode is a separate route.
+Categories can exist (e.g., Vehicles, Clothes, Electronics).
 
 ---
 
-## 🗄 Local Data Model (Frontend State Only)
+## 📌 Admin Capabilities
 
-### Category
+Admin creates fields with:
 
-```ts
-interface Category {
-  id: string
-  name: string
+* **Property Name** (text input)
+* **Property Data Type:** string | number | boolean | date | time
+* **Input UI Type:** text field | date picker | time picker | switch | dropdown
+* **Optional:** predefined dropdown values
+
+Store schema like:
+
+```json
+{
+  "category": "vehicle",
+  "fields": [
+    { "name": "brand", "type": "string", "ui": "text" },
+    { "name": "wheels", "type": "number", "ui": "text" },
+    { "name": "electric", "type": "boolean", "ui": "switch" }
+  ]
 }
 ```
 
-### Property
-
-```ts
-interface Property {
-  id: string
-  categoryId: string
-  label: string
-  dataType: "string" | "number" | "boolean" | "date" | "time"
-  uiType: "text" | "number" | "toggle" | "date" | "time" | "select"
-  options?: string[]
-  orderIndex: number
-}
-```
-
-### Entry
-
-```ts
-interface Entry {
-  id: string
-  categoryId: string
-  values: Record<string, any>
-  createdAt: number
-}
-```
+Save this JSON in **LocalStorage**.
 
 ---
 
-## 🪝 Zustand Store Requirements
-
-Create separate stores:
-
-### `/stores/categories.ts`
-
-* addCategory
-* removeCategory
-* load/save from LocalStorage
-
-### `/stores/properties.ts`
-
-* addProperty
-* updateProperty
-* deleteProperty
-* reorderProperties
-* load/save from LocalStorage
-
-### `/stores/entries.ts`
-
-* addEntry
-* deleteEntry
-* load/save from LocalStorage
-
-Use `zustand/middleware` → `persist()`.
-
----
-
-## 📍 App Routes / Screens
-
-### Admin Views
-
-```
-/admin/categories
-```
-
-* Add Category
-* List Categories
-
-```
-/admin/categories/:id
-```
-
-* Add/edit properties for that category
-* Fields:
-
-  * label
-  * data type
-  * ui type
-* Options array input for dropdown
-
-```
-/admin/categories/:id/preview
-```
-
-* Render form UI using RHF
-
-### User Views
-
-```
-/user
-```
+## 👤 User Capability
 
 * Select category
-* Go to dynamic form
-
-```
-/user/:categoryId/form
-```
-
-* Render RHF form
-* On submit → save Entry to LocalStorage
-
-```
-/user/entries
-```
-
-* List stored entries
+* UI auto-generates form using schema
+* Enter values
+* Save submissions (LocalStorage list)
 
 ---
 
-## 🧩 Dynamic Form Rendering
+## 🗂 Storage Model (LocalStorage Keys)
 
-Use `React Hook Form` + `Controller`.
-
-Map properties to UI components:
-
-| uiType | Component                 |
-| ------ | ------------------------- |
-| text   | `<input type="text" />`   |
-| number | `<input type="number" />` |
-| toggle | `<Switch />`              |
-| date   | `<input type="date" />`   |
-| time   | `<input type="time" />`   |
-| select | `<Select options />`      |
+* `schemas` → array of schema objects
+* `entries` → values filled by users
 
 ---
 
-## 🎨 UI Guidelines using Tailwind + Shadcn
+## 🧱 Zustand State Needed
 
-* Use Cards for groups
-* Use Dialog for modals
-* Use Select for dropdown type fields
-* Buttons should be clear: Add, Save, Delete
-
----
-
-## 🧪 MVP Tasks for Agent
-
-1. Initialize project with Tailwind + Zustand.
-2. Build LocalStorage persistence wrapper.
-3. Implement Categories Store + screen.
-4. Implement Properties Store + screen.
-5. Render dynamic form from property schema.
-6. Store user entries locally.
-7. Render entries list.
-8. Style using Tailwind.
+* `schemas` store
+* `addSchema(category, fields)`
+* `addFieldToSchema(category, field)`
+* `entries` store
+* `addEntry(category, data)`
 
 ---
 
-## 🛠 Future Upgrade Path
+## 🎨 UI Pages
 
-Later integrate Supabase:
+### 1. Schema Builder (Admin-only)
 
-* Replace Categories LocalStorage → categories table
-* Replace Properties LocalStorage → properties table
-* Replace Entries LocalStorage → JSON column
-* Add user authentication
-* Add Row-Level Security
+* Select category or create new category
+* Add multiple fields (React Hook Form + useFieldArray)
+* Save
 
-No UI changes required.
+### 2. Form Page (User)
+
+* Select category
+* Load schema
+* Render dynamic fields
+* Save entry
+
+### 3. Entries Viewer
+
+* Show saved user entries
 
 ---
 
-## ✔ Acceptance Criteria
+## 🚀 Libraries That Help
 
-* Admin can create category
-* Admin can define schema fields
-* Schema persists across refresh
-* User can fill forms dynamically
-* Entries saved in LocalStorage
-* Entries viewable
+* `react-hook-form`
+* `zustand`
+* `clsx` (conditional styling)
 
+---
 
+## 🤖 AI Agent Tasks
+
+Agent should be able to:
+
+1. Generate component scaffolds
+2. Build Zustand store
+3. Build form generator from schema
+4. Build admin form builder using `useFieldArray`
+5. Map `type + ui` to correct input component
+6. Save & read schemas from LocalStorage
+7. Build UI with Tailwind
+8. Build basic routing
+
+---
+
+## 🏁 Next Goal
+
+Implement **first Admin page:**
+
+* Add category
+* Add fields
+* Save schemas to LocalStorage
