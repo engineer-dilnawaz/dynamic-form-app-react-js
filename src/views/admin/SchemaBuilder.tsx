@@ -1,5 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from 'react';
-import { useForm, useFieldArray, useWatch, type Control, Controller } from 'react-hook-form';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useSchemaStore } from '../../stores/useSchemaStore';
@@ -7,21 +6,10 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { CustomSelect } from '../../components/ui/CustomSelect';
 import { Card, CardContent } from '../../components/ui/Card';
-import { Trash2, Plus, Save, X } from 'lucide-react';
+import { Plus, Save, X } from 'lucide-react';
 import type { CategorySchema, FieldType, UiType } from '../../types';
-
-interface SchemaFormValues {
-  name: string;
-  fields: {
-    id: string;
-    name: string;
-    label: string;
-    type: FieldType;
-    ui: UiType;
-    required: boolean;
-    optionsString?: string;
-  }[];
-}
+import { useSchemaForm, type SchemaFormValues } from '../../features/builder/hooks/useSchemaForm';
+import { FieldRow } from '../../features/builder/components/FieldRow';
 
 const TEMPLATES: Record<string, Partial<SchemaFormValues>> = {
   vehicles: {
@@ -51,208 +39,6 @@ const TEMPLATES: Record<string, Partial<SchemaFormValues>> = {
   }
 };
 
-const FIELD_TYPES = [
-    { label: 'String', value: 'string' },
-    { label: 'Number', value: 'number' },
-    { label: 'Boolean', value: 'boolean' },
-    { label: 'Date', value: 'date' },
-    { label: 'Time', value: 'time' },
-];
-
-const WIDGET_OPTIONS: Record<string, { label: string; value: string }[]> = {
-    number: [{ label: 'Number Input', value: 'number' }],
-    boolean: [{ label: 'Switch', value: 'switch' }],
-    date: [{ label: 'Date Picker', value: 'date' }],
-    time: [{ label: 'Time Picker', value: 'time' }],
-    string: [
-        { label: 'Single Line', value: 'text' },
-        { label: 'Multi Line', value: 'textarea' },
-        { label: 'Dropdown', value: 'select' },
-    ],
-    default: [{ label: 'Text', value: 'text' }]
-};
-
-// --- Helper Component for Options Tag Input ---
-const OptionsEditor = ({ 
-    value = '', 
-    onChange 
-}: { 
-    value?: string, 
-    onChange: (val: string) => void 
-}) => {
-    const [inputValue, setInputValue] = useState('');
-    
-    // Parse the comma-separated string into an array of tags, removing empty ones
-    const tags = value.split(',').map(t => t.trim()).filter(Boolean);
-
-    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const newTag = inputValue.trim();
-            if (newTag && !tags.includes(newTag)) {
-                const newTags = [...tags, newTag];
-                onChange(newTags.join(', '));
-                setInputValue('');
-            }
-        }
-    };
-
-    const removeTag = (indexToRemove: number) => {
-        const newTags = tags.filter((_, index) => index !== indexToRemove);
-        onChange(newTags.join(', '));
-    };
-
-    return (
-        <div className="space-y-2">
-             <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1">
-                Dropdown Options
-            </label>
-            <div className="flex flex-wrap gap-2 p-3 min-h-[48px] rounded-xl border border-brand-border bg-brand-input focus-within:ring-2 focus-within:ring-brand-primary/50 focus-within:border-brand-primary transition-all">
-                {tags.map((tag, i) => (
-                    <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-primary/20 text-brand-primary border border-brand-primary/30">
-                        {tag}
-                        <button
-                            type="button"
-                            onClick={() => removeTag(i)}
-                            className="ml-1.5 hover:text-white focus:outline-none"
-                        >
-                            <X className="w-3 h-3" />
-                        </button>
-                    </span>
-                ))}
-                <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={tags.length === 0 ? "Type option and press Enter..." : "Add..."}
-                    className="flex-1 bg-transparent border-none text-sm text-brand-text placeholder:text-gray-500 focus:outline-none min-w-[120px]"
-                />
-            </div>
-            <p className="text-xs text-brand-muted ml-1">Example: "Red", press Enter, "Blue", press Enter.</p>
-        </div>
-    );
-};
-
-const FieldRow = ({ index, control, remove, register, setValue }: { index: number, control: Control<SchemaFormValues>, remove: (index: number) => void, register: any, setValue: any }) => {
-    const type = useWatch({ control, name: `fields.${index}.type` });
-    const ui = useWatch({ control, name: `fields.${index}.ui` });
-    
-    // Auto-select UI when Type changes
-    useEffect(() => {
-        const defaultUi: Record<string, UiType> = {
-            string: 'text',
-            number: 'number',
-            boolean: 'switch',
-            date: 'date',
-            time: 'time'
-        };
-         if (type) {
-             const newUi = defaultUi[type] || 'text';
-             // Only update if the current UI is not compatible with the new type to avoid overwriting user choice unnecessarily,
-             // but here we force reset on type change to ensure validity.
-             // Actually currently logic was overwriting it always. Let's keep it simple.
-             setValue(`fields.${index}.ui`, newUi);
-         }
-    }, [type, index, setValue]);
-
-    const currentWidgetOptions = WIDGET_OPTIONS[type] || WIDGET_OPTIONS.default;
-
-    return (
-        <Card className="relative group border-brand-border/50 bg-brand-surface/50 hover:border-brand-border transition-colors">
-            <CardContent className="pt-6 pl-6 pr-12 grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-3">
-                    <Input
-                        label="Label"
-                        placeholder="Display Label"
-                        {...register(`fields.${index}.label` as const, { required: true })}
-                    />
-                </div>
-                <div className="md:col-span-3">
-                    <Input
-                        label="Property Name"
-                        placeholder="database_key"
-                        {...register(`fields.${index}.name` as const, { required: true })}
-                    />
-                </div>
-                <div className="md:col-span-2">
-                    <Controller
-                        control={control}
-                        name={`fields.${index}.type`}
-                        render={({ field }) => (
-                            <CustomSelect
-                                label="Type"
-                                options={FIELD_TYPES}
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
-                        )}
-                    />
-                </div>
-                <div className="md:col-span-2">
-                     <Controller
-                        control={control}
-                        name={`fields.${index}.ui`}
-                        render={({ field }) => (
-                            <CustomSelect
-                                label="Widget"
-                                options={currentWidgetOptions}
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
-                        )}
-                    />
-                </div>
-                <div className="md:col-span-2 flex flex-col justify-end h-[88px] pb-3">
-                    <Controller
-                        control={control}
-                        name={`fields.${index}.required`}
-                        render={({ field: { onChange, value } }) => (
-                            <label className="flex items-center space-x-3 cursor-pointer group">
-                                <div className="relative">
-                                    <input 
-                                        type="checkbox" 
-                                        className="sr-only" 
-                                        checked={value} 
-                                        onChange={onChange}
-                                    />
-                                    <div className={`block w-10 h-6 rounded-full transition-colors ${value ? 'bg-brand-primary' : 'bg-gray-700 group-hover:bg-gray-600'}`}></div>
-                                    <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${value ? 'translate-x-4' : 'translate-x-0'}`}></div>
-                                </div>
-                                <span className={`text-sm font-medium transition-colors ${value ? 'text-brand-primary' : 'text-gray-400 group-hover:text-white'}`}>
-                                    Required
-                                </span>
-                            </label>
-                        )}
-                    />
-                </div>
-
-                {ui === 'select' && (
-                    <div className="md:col-span-12 animation-fade-in">
-                        <Controller
-                            control={control}
-                            name={`fields.${index}.optionsString`}
-                            render={({ field }) => (
-                                <OptionsEditor
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                />
-                            )}
-                        />
-                    </div>
-                )}
-            </CardContent>
-            <button
-                type="button"
-                onClick={() => remove(index)}
-                className="absolute right-4 top-4 p-2 rounded-lg text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
-            >
-                <Trash2 className="w-5 h-5" />
-            </button>
-        </Card>
-    );
-};
-
 export default function SchemaBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -261,17 +47,7 @@ export default function SchemaBuilder() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [globalError, setGlobalError] = useState<string | null>(null);
 
-  const { control, register, handleSubmit, reset, setValue, setError, formState: { errors } } = useForm<SchemaFormValues>({
-    defaultValues: {
-      name: '',
-      fields: []
-    }
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "fields"
-  });
+  const { control, register, handleSubmit, reset, setValue, setError, errors, fields, append, remove } = useSchemaForm();
 
   useEffect(() => {
     if (isEditMode && id) {
@@ -327,8 +103,8 @@ export default function SchemaBuilder() {
       id: f.id || uuidv4(),
       name: f.name,
       label: f.label,
-      type: f.type,
-      ui: f.ui,
+      type: f.type as FieldType,
+      ui: f.ui as UiType,
       required: f.required,
       options: f.optionsString ? f.optionsString.split(',').map(s => ({ label: s.trim(), value: s.trim() })).filter(o => o.value) : undefined
     }));
@@ -430,3 +206,4 @@ export default function SchemaBuilder() {
     </div>
   );
 }
+

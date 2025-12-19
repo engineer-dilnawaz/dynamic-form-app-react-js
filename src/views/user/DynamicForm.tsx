@@ -1,14 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
 import { useSchemaStore } from '../../stores/useSchemaStore';
 import { useEntryStore } from '../../stores/useEntryStore';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
 import { Card, CardContent } from '../../components/ui/Card';
 import { ArrowLeft, Check } from 'lucide-react';
-import type { FieldSchema } from '../../types';
+import { FieldFactory } from '../../features/renderer/FieldFactory';
 
 export default function DynamicForm() {
   const { id } = useParams();
@@ -34,78 +32,6 @@ export default function DynamicForm() {
     navigate('/user/entries');
   };
 
-  const renderField = (field: FieldSchema) => {
-    return (
-      <div key={field.id} className="space-y-2">
-        <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1">
-          {field.label} {field.required && <span className="text-red-500">*</span>}
-        </label>
-        
-        <Controller
-          name={field.name}
-          control={control}
-          rules={{ required: field.required ? 'This field is required' : false }}
-          render={({ field: { onChange, value } }) => {
-            switch (field.ui) {
-              case 'switch':
-                return (
-                   <div className="flex items-center h-12 px-4 rounded-xl border border-brand-border bg-brand-input">
-                    <button
-                      type="button"
-                      onClick={() => onChange(!value)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/50 ${
-                        value ? 'bg-brand-primary' : 'bg-gray-700'
-                      }`}
-                    >
-                      <span
-                        className={`${
-                          value ? 'translate-x-6' : 'translate-x-1'
-                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </button>
-                    <span className="ml-3 text-sm text-brand-muted">{value ? 'Yes' : 'No'}</span>
-                  </div>
-                );
-              case 'select':
-                return (
-                  <Select
-                    onChange={onChange}
-                    value={value || ''}
-                    error={errors[field.name]?.message as string}
-                  >
-                    <option value="">Select an option...</option>
-                    {field.options?.map((opt, i) => (
-                      <option key={i} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </Select>
-                );
-               case 'textarea':
-                return (
-                   <div className="w-full space-y-1">
-                      <textarea
-                        className="flex min-h-[120px] w-full rounded-xl border border-brand-border bg-brand-input px-4 py-3 text-brand-text placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
-                        onChange={onChange}
-                        value={value || ''}
-                      />
-                      {errors[field.name] && <p className="text-xs text-red-500 ml-1">{errors[field.name]?.message as string}</p>}
-                   </div>
-                );
-              default: // text, number, date, time
-                return (
-                  <Input
-                    type={field.ui === 'number' ? 'number' : field.ui === 'date' ? 'date' : field.ui === 'time' ? 'time' : 'text'}
-                    onChange={onChange}
-                    value={value || ''}
-                    error={errors[field.name]?.message as string}
-                  />
-                );
-            }
-          }}
-        />
-      </div>
-    );
-  };
-
   return (
     <div className="max-w-2xl mx-auto space-y-6">
        <div className="flex items-center space-x-4">
@@ -122,7 +48,14 @@ export default function DynamicForm() {
         </div>
         <CardContent className="p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            {schema.fields.map(renderField)}
+            {schema.fields.map((field) => (
+                <FieldFactory 
+                    key={field.id} 
+                    field={field} 
+                    control={control} 
+                    error={errors[field.name]?.message as string} 
+                />
+            ))}
             
             <div className="pt-6 border-t border-brand-border mt-8">
               <Button type="submit" className="w-full h-12 text-lg" size="lg">
@@ -136,3 +69,4 @@ export default function DynamicForm() {
     </div>
   );
 }
+
