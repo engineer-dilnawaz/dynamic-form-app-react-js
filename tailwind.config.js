@@ -22,5 +22,25 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: [
+      {
+        formbuilder: {
+          "primary": "#2BEE79",
+          "secondary": "#1A2C22",
+          "accent": "#80F5AD",
+          "neutral": "#2B392F",
+          "base-100": "#132217",
+          "base-200": "#1A2C22",
+          "base-300": "#0f1614",
+          "base-content": "#FFFFFF",
+          "info": "#3abff8",
+          "success": "#2BEE79",
+          "warning": "#fbbd23",
+          "error": "#f87272",
+        },
+      },
+    ],
+  },
 }

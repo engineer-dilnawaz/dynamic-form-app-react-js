@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 import { Button } from './Button';
 
 interface ModalProps {
@@ -28,29 +27,22 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
-        className="w-full max-w-lg bg-brand-surface border border-brand-border rounded-2xl shadow-2xl transform transition-all animate-in zoom-in-95 duration-200"
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="flex items-center justify-between p-6 border-b border-brand-border">
-          <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
-          <button onClick={onClose} className="text-brand-muted hover:text-white transition-colors">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <div className={`modal ${isOpen ? 'modal-open' : ''} modal-bottom sm:modal-middle`}>
+      <div className="modal-box !bg-brand-surface border border-brand-border shadow-2xl relative">
+        <label onClick={onClose} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</label>
+        <h3 className="font-bold text-lg text-white mb-4">{title}</h3>
         
-        <div className="p-6 overflow-y-auto max-h-[70vh]">
+        <div className="py-4 max-h-[70vh] overflow-y-auto">
           {children}
         </div>
 
-        <div className="flex justify-end p-6 border-t border-brand-border bg-brand-dark/30 rounded-b-2xl">
-          <Button onClick={onClose} variant="secondary">
-            Close
-          </Button>
+        <div className="modal-action">
+             <Button onClick={onClose} variant="ghost">Close</Button>
         </div>
       </div>
+       <form method="dialog" className="modal-backdrop">
+             <button onClick={onClose}>close</button>
+        </form>
     </div>,
     document.body
   );

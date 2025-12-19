@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { useForm, useFieldArray, useWatch, type Control } from 'react-hook-form';
+import { useEffect, useMemo } from 'react';
+import { useForm, useFieldArray, useWatch, type Control, Controller } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useSchemaStore } from '../../stores/useSchemaStore';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
+import { CustomSelect } from '../../components/ui/CustomSelect';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Trash2, Plus, Save } from 'lucide-react';
 import type { CategorySchema, FieldType, UiType } from '../../types';
@@ -51,8 +51,46 @@ const TEMPLATES: Record<string, Partial<SchemaFormValues>> = {
   }
 };
 
-const FieldRow = ({ index, control, remove, register }: { index: number, control: Control<SchemaFormValues>, remove: (index: number) => void, register: any }) => {
+const FIELD_TYPES = [
+    { label: 'String', value: 'string' },
+    { label: 'Number', value: 'number' },
+    { label: 'Boolean', value: 'boolean' },
+    { label: 'Date', value: 'date' },
+    { label: 'Time', value: 'time' },
+];
+
+const WIDGET_OPTIONS: Record<string, { label: string; value: string }[]> = {
+    number: [{ label: 'Number Input', value: 'number' }],
+    boolean: [{ label: 'Switch', value: 'switch' }],
+    date: [{ label: 'Date Picker', value: 'date' }],
+    time: [{ label: 'Time Picker', value: 'time' }],
+    string: [
+        { label: 'Single Line', value: 'text' },
+        { label: 'Multi Line', value: 'textarea' },
+        { label: 'Dropdown', value: 'select' },
+    ],
+    default: [{ label: 'Text', value: 'text' }]
+};
+
+const FieldRow = ({ index, control, remove, register, setValue }: { index: number, control: Control<SchemaFormValues>, remove: (index: number) => void, register: any, setValue: any }) => {
     const type = useWatch({ control, name: `fields.${index}.type` });
+    
+    // Auto-select UI when Type changes
+    useEffect(() => {
+        const defaultUi: Record<string, UiType> = {
+            string: 'text',
+            number: 'number',
+            boolean: 'switch',
+            date: 'date',
+            time: 'time'
+        };
+         if (type) {
+             const newUi = defaultUi[type] || 'text';
+             setValue(`fields.${index}.ui`, newUi);
+         }
+    }, [type, index, setValue]);
+
+    const currentWidgetOptions = WIDGET_OPTIONS[type] || WIDGET_OPTIONS.default;
 
     return (
         <Card className="relative group border-brand-border/50 bg-brand-surface/50 hover:border-brand-border transition-colors">
@@ -72,37 +110,34 @@ const FieldRow = ({ index, control, remove, register }: { index: number, control
                     />
                 </div>
                 <div className="md:col-span-2">
-                    <Select
-                        label="Type"
-                        {...register(`fields.${index}.type` as const)}
-                    >
-                        <option value="string">String</option>
-                        <option value="number">Number</option>
-                        <option value="boolean">Boolean</option>
-                        <option value="date">Date</option>
-                        <option value="time">Time</option>
-                    </Select>
+                    <Controller
+                        control={control}
+                        name={`fields.${index}.type`}
+                        render={({ field }) => (
+                            <CustomSelect
+                                label="Type"
+                                options={FIELD_TYPES}
+                                value={field.value}
+                                onChange={field.onChange}
+                            />
+                        )}
+                    />
                 </div>
                 <div className="md:col-span-2">
-                    <Select
-                        label="Widget"
-                        {...register(`fields.${index}.ui` as const)}
-                    >
-                        {type === 'number' && <option value="number">Number Input</option>}
-                        {type === 'boolean' && <option value="switch">Switch</option>}
-                        {type === 'date' && <option value="date">Date Picker</option>}
-                        {type === 'time' && <option value="time">Time Picker</option>}
-                        {type === 'string' && (
-                            <>
-                                <option value="text">Single Line</option>
-                                <option value="textarea">Multi Line</option>
-                                <option value="select">Dropdown</option>
-                            </>
+                     <Controller
+                        control={control}
+                        name={`fields.${index}.ui`}
+                        render={({ field }) => (
+                            <CustomSelect
+                                label="Widget"
+                                options={currentWidgetOptions}
+                                value={field.value}
+                                onChange={field.onChange}
+                            />
                         )}
-                         {!['number', 'boolean', 'date', 'time', 'string'].includes(type) && <option value="text">Text</option>}
-                    </Select>
+                    />
                 </div>
-                <div className="md:col-span-2 flex items-center pt-6">
+                <div className="md:col-span-2 flex flex-col justify-end pb-3">
                     <label className="flex items-center space-x-2 text-sm text-gray-400 hover:text-white cursor-pointer transition-colors">
                         <input type="checkbox" {...register(`fields.${index}.required` as const)} className="rounded border-brand-border bg-brand-input text-brand-primary focus:ring-brand-primary w-5 h-5" />
                         <span>Required</span>
@@ -195,21 +230,27 @@ export default function SchemaBuilder() {
     navigate('/admin');
   };
 
+  const templateOptions = [
+        { label: 'Vehicles', value: 'vehicles' },
+        { label: 'Clothing', value: 'clothes' },
+        { label: 'Electronics', value: 'electronics' },
+  ];
+
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
          <div className="flex flex-col">
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            {isEditMode ? 'Edit Schema' : 'New Schema'}
-            </h1>
-            <p className="text-gray-400 mt-1">Define the data structure and UI widgets.</p>
+             <h1 className="text-3xl font-extrabold text-white tracking-tight">
+             {isEditMode ? 'Edit Schema' : 'New Schema'}
+             </h1>
+             <p className="text-gray-400 mt-1">Define the data structure and UI widgets.</p>
          </div>
          
-         <div className="flex items-center space-x-4">
+         <div className="flex items-center space-x-4 flex-shrink-0">
              <Button variant="secondary" onClick={() => navigate('/admin')}>
                 Cancel
              </Button>
-            <Button onClick={handleSubmit(onSubmit)}>
+            <Button onClick={handleSubmit(onSubmit)} className="min-w-[150px]">
                 <Save className="w-5 h-5 mr-2" />
                 Save Schema
             </Button>
@@ -227,16 +268,12 @@ export default function SchemaBuilder() {
             
              {!isEditMode && (
                  <div className="pt-0">
-                     <Select
+                     <CustomSelect
                         label="Template"
-                        onChange={(e) => loadTemplate(e.target.value)} 
-                        defaultValue=""
-                     >
-                         <option value="" disabled>Select a template...</option>
-                         <option value="vehicles">Vehicles</option>
-                         <option value="clothes">Clothing</option>
-                         <option value="electronics">Electronics</option>
-                     </Select>
+                        onChange={(val) => loadTemplate(val)}
+                        options={templateOptions}
+                        placeholder="Select a template..."
+                     />
                  </div>
              )}
           </CardContent>
@@ -253,7 +290,7 @@ export default function SchemaBuilder() {
 
           <div className="space-y-4">
             {fields.map((field, index) => (
-                <FieldRow key={field.id} index={index} control={control} remove={remove} register={register} />
+                <FieldRow key={field.id} index={index} control={control} remove={remove} register={register} setValue={setValue} />
             ))}
           </div>
           

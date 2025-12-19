@@ -1,7 +1,6 @@
 import { type SelectHTMLAttributes, forwardRef } from 'react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { ChevronDown } from 'lucide-react';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -22,22 +21,25 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             {label}
           </label>
         )}
-        <div className="relative">
-            <select
-            ref={ref}
-            className={cn(
-                'flex h-12 w-full appearance-none rounded-xl border border-brand-border bg-brand-input px-4 py-2 pr-10 text-brand-text text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200',
-                error && 'border-red-500 focus:ring-red-500',
-                className
-            )}
-            {...props}
-            >
-            {children}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-brand-muted">
-                <ChevronDown className="h-4 w-4" />
-            </div>
-        </div>
+        <select
+          ref={ref}
+          className={cn(
+            'flex h-12 w-full rounded-xl border border-brand-border !bg-brand-surface px-4 py-2 text-brand-text text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200',
+            error && 'border-red-500 focus:ring-red-500',
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </select>
+        
+        {/* Force options to be dark in case of browser defaults */}
+        <style>{`
+          select option {
+            background-color: #1A2C22;
+            color: white;
+          }
+        `}</style>
         
         {error && <p className="text-xs text-red-500 ml-1">{error}</p>}
       </div>

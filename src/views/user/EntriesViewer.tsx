@@ -4,7 +4,7 @@ import { useSchemaStore } from '../../stores/useSchemaStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
-import { Select } from '../../components/ui/Select';
+import { CustomSelect, type Option } from '../../components/ui/CustomSelect';
 import { X, Eye } from 'lucide-react';
 import type { FormEntry } from '../../types';
 
@@ -26,6 +26,11 @@ export default function EntriesViewer() {
     new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
   );
 
+  const filterOptions: Option[] = [
+      { label: 'All Forms', value: 'all' },
+      ...schemas.map(s => ({ label: s.name, value: s.id }))
+  ];
+
   return (
     <div className="space-y-8">
        <div className="flex items-center justify-between">
@@ -39,16 +44,12 @@ export default function EntriesViewer() {
       <Card className="p-1 bg-brand-surface border-brand-border">
           <div className="flex flex-col md:flex-row gap-4 p-4 items-end">
               <div className="w-full md:w-1/3">
-                  <Select
+                  <CustomSelect
                     label="Form Type"
                     value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                  >
-                      <option value="all">All Forms</option>
-                      {schemas.map(s => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                  </Select>
+                    onChange={(val) => setFilterCategory(val)}
+                    options={filterOptions}
+                  />
               </div>
               <div className="w-full md:w-1/3">
                   <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1 mb-1 block">Date</label>
@@ -56,7 +57,7 @@ export default function EntriesViewer() {
                     type="date"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
-                    className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-3 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all"
+                    className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-3 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all [color-scheme:dark]"
                   />
               </div>
               <div className="w-full md:w-auto pb-[1px]">
