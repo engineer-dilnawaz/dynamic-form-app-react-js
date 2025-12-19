@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useSchemaStore } from '../../stores/useSchemaStore';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Trash2, Plus, Save } from 'lucide-react';
 import type { CategorySchema, FieldType, UiType } from '../../types';
@@ -71,23 +72,21 @@ const FieldRow = ({ index, control, remove, register }: { index: number, control
                     />
                 </div>
                 <div className="md:col-span-2">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1 mb-1 block">Type</label>
-                    <select
+                    <Select
+                        label="Type"
                         {...register(`fields.${index}.type` as const)}
-                        className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-3 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all"
                     >
                         <option value="string">String</option>
                         <option value="number">Number</option>
                         <option value="boolean">Boolean</option>
                         <option value="date">Date</option>
                         <option value="time">Time</option>
-                    </select>
+                    </Select>
                 </div>
                 <div className="md:col-span-2">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1 mb-1 block">Widget</label>
-                    <select
+                    <Select
+                        label="Widget"
                         {...register(`fields.${index}.ui` as const)}
-                        className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-3 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all"
                     >
                         {type === 'number' && <option value="number">Number Input</option>}
                         {type === 'boolean' && <option value="switch">Switch</option>}
@@ -101,11 +100,11 @@ const FieldRow = ({ index, control, remove, register }: { index: number, control
                             </>
                         )}
                          {!['number', 'boolean', 'date', 'time', 'string'].includes(type) && <option value="text">Text</option>}
-                    </select>
+                    </Select>
                 </div>
                 <div className="md:col-span-2 flex items-center pt-6">
                     <label className="flex items-center space-x-2 text-sm text-gray-400 hover:text-white cursor-pointer transition-colors">
-                        <input type="checkbox" {...register(`fields.${index}.required` as const)} className="rounded border-brand-border bg-brand-input text-brand-primary focus:ring-brand-primary" />
+                        <input type="checkbox" {...register(`fields.${index}.required` as const)} className="rounded border-brand-border bg-brand-input text-brand-primary focus:ring-brand-primary w-5 h-5" />
                         <span>Required</span>
                     </label>
                 </div>
@@ -128,7 +127,6 @@ const FieldRow = ({ index, control, remove, register }: { index: number, control
         </Card>
     );
 };
-
 
 export default function SchemaBuilder() {
   const { id } = useParams();
@@ -228,18 +226,17 @@ export default function SchemaBuilder() {
             />
             
              {!isEditMode && (
-                 <div className="space-y-1">
-                     <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1">Template</label>
-                     <select 
+                 <div className="pt-0">
+                     <Select
+                        label="Template"
                         onChange={(e) => loadTemplate(e.target.value)} 
-                        className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-4 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all"
                         defaultValue=""
                      >
                          <option value="" disabled>Select a template...</option>
                          <option value="vehicles">Vehicles</option>
                          <option value="clothes">Clothing</option>
                          <option value="electronics">Electronics</option>
-                     </select>
+                     </Select>
                  </div>
              )}
           </CardContent>

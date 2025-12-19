@@ -5,6 +5,7 @@ import { useSchemaStore } from '../../stores/useSchemaStore';
 import { useEntryStore } from '../../stores/useEntryStore';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Card, CardContent } from '../../components/ui/Card';
 import { ArrowLeft, Check } from 'lucide-react';
 import type { FieldSchema } from '../../types';
@@ -62,24 +63,21 @@ export default function DynamicForm() {
                         } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                       />
                     </button>
-                    <span className="ml-3 text-sm text-gray-400">{value ? 'Yes' : 'No'}</span>
+                    <span className="ml-3 text-sm text-brand-muted">{value ? 'Yes' : 'No'}</span>
                   </div>
                 );
               case 'select':
                 return (
-                  <div className="relative">
-                      <select
-                        className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-4 py-2 text-brand-text placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200 appearance-none"
-                        onChange={onChange}
-                        value={value || ''}
-                      >
-                        <option value="">Select an option...</option>
-                        {field.options?.map((opt, i) => (
-                          <option key={i} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                      {/* Custom Arrow could go here */}
-                  </div>
+                  <Select
+                    onChange={onChange}
+                    value={value || ''}
+                    error={errors[field.name]?.message as string}
+                  >
+                    <option value="">Select an option...</option>
+                    {field.options?.map((opt, i) => (
+                      <option key={i} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </Select>
                 );
                case 'textarea':
                 return (
@@ -115,17 +113,17 @@ export default function DynamicForm() {
         </Button>
       </div>
 
-      <Card className="bg-brand-surface border-brand-border overflow-hidden">
-        <div className="p-6 border-b border-brand-border bg-brand-surface">
-            <h1 className="text-2xl font-bold text-white">{schema.name}</h1>
-            <p className="text-gray-400 text-sm mt-1">Please fill in the details below.</p>
+      <Card className="bg-brand-surface border-brand-border overflow-hidden shadow-2xl">
+        <div className="p-6 border-b border-brand-border bg-brand-surface/50">
+            <h1 className="text-2xl font-bold text-white tracking-tight">{schema.name}</h1>
+            <p className="text-brand-muted text-sm mt-1">Please fill in the details below.</p>
         </div>
         <CardContent className="p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {schema.fields.map(renderField)}
             
             <div className="pt-6 border-t border-brand-border mt-8">
-              <Button type="submit" className="w-full" size="lg">
+              <Button type="submit" className="w-full h-12 text-lg" size="lg">
                 <Check className="w-5 h-5 mr-2" />
                 Submit Entry
               </Button>
