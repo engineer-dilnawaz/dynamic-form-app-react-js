@@ -9,13 +9,15 @@ export default {
     extend: {
       colors: {
         brand: {
-          primary: '#10b981', // Emerald 500
-          hover: '#059669', // Emerald 600
-          dark: '#020403', // Deep Black/Green
-          surface: '#0f1614', // Dark Card Bg
-          border: '#1f2e2a', // Subtle Border
-          text: '#ecfdf5', // Light Text
-          input: '#111a16',
+          primary: '#2BEE79', // Primary Green
+          hover: '#24D66C', // Primary Hover
+          light: '#80F5AD', // Primary Light
+          dark: '#132217', // BG Dark
+          surface: '#1A2C22', // Surface
+          border: '#2B392F', // Border
+          text: '#FFFFFF', // Text Main
+          muted: '#9DB9A8', // Text Muted
+          input: '#1A2C22', // Match Surface
         }
       }
     },

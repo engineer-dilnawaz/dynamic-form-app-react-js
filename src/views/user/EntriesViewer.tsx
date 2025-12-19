@@ -1,10 +1,11 @@
 import { useState } from 'react';
-
 import { useEntryStore } from '../../stores/useEntryStore';
 import { useSchemaStore } from '../../stores/useSchemaStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Modal } from '../../components/ui/Modal';
 import { X, Eye, FileText } from 'lucide-react';
+import type { FormEntry } from '../../types';
 
 export default function EntriesViewer() {
   const { entries } = useEntryStore();
@@ -12,6 +13,7 @@ export default function EntriesViewer() {
 
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterDate, setFilterDate] = useState<string>('');
+  const [selectedEntry, setSelectedEntry] = useState<FormEntry | null>(null);
 
   const filteredEntries = entries.filter((entry) => {
       const matchCategory = filterCategory === 'all' || entry.categoryId === filterCategory;
@@ -76,14 +78,14 @@ export default function EntriesViewer() {
                 <p className="text-gray-500">No entries found matching filters.</p>
             </div>
           ) : (
-             <div className="bg-brand-surface rounded-2xl border border-brand-border overflow-hidden">
-                <table className="w-full text-left">
+             <div className="bg-brand-surface rounded-2xl border border-brand-border overflow-hidden shadow-xl">
+                <table className="w-full text-left border-collapse">
                     <thead className="bg-brand-surface border-b border-brand-border">
                         <tr>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Form Name</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date Submitted</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                            <th className="px-6 py-4 text-xs font-bold text-brand-muted uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-xs font-bold text-brand-muted uppercase tracking-wider">Form Name</th>
+                            <th className="px-6 py-4 text-xs font-bold text-brand-muted uppercase tracking-wider">Date Submitted</th>
+                            <th className="px-6 py-4 text-xs font-bold text-brand-muted uppercase tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-brand-border">
@@ -92,14 +94,14 @@ export default function EntriesViewer() {
                             return (
                                 <tr key={entry.id} className="hover:bg-brand-border/30 transition-colors group">
                                     <td className="px-6 py-4">
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary border border-brand-primary/20 shadow-[0_0_10px_rgba(43,238,121,0.1)]">
                                             Success
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-sm font-medium text-white">{schema?.name || 'Unknown'}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-400">{new Date(entry.submittedAt).toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-sm text-brand-muted font-mono tracking-tight">{new Date(entry.submittedAt).toLocaleString()}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="sm" onClick={() => alert(JSON.stringify(entry.data, null, 2))}>
+                                        <Button variant="ghost" size="sm" onClick={() => setSelectedEntry(entry)}>
                                             <Eye className="w-4 h-4 mr-2" />
                                             View Data
                                         </Button>
@@ -112,6 +114,37 @@ export default function EntriesViewer() {
              </div>
           )}
         </div>
+
+        {/* View Data Modal */}
+        <Modal 
+            isOpen={!!selectedEntry} 
+            onClose={() => setSelectedEntry(null)}
+            title={selectedEntry ? (getSchema(selectedEntry.categoryId)?.name || 'Entry Details') : 'Details'}
+        >
+             {selectedEntry && (
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center text-sm text-brand-muted pb-4 border-b border-brand-border">
+                        <span>ID: <span className="font-mono text-white">{selectedEntry.id}</span></span>
+                        <span>{new Date(selectedEntry.submittedAt).toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="bg-brand-dark rounded-xl p-4 border border-brand-border font-mono text-sm overflow-x-auto">
+                        <table className="w-full text-left">
+                            <tbody>
+                                {Object.entries(selectedEntry.data).map(([key, value]) => (
+                                    <tr key={key} className="border-b border-brand-border/50 last:border-0">
+                                        <td className="py-2 pr-4 text-brand-primary font-semibold">{key.charAt(0).toUpperCase() + key.slice(1)}</td>
+                                        <td className="py-2 text-white break-all">
+                                            {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+             )}
+        </Modal>
     </div>
   );
 }
