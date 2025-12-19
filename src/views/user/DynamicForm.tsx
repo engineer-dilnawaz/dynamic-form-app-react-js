@@ -20,7 +20,7 @@ export default function DynamicForm() {
   const { control, handleSubmit, formState: { errors } } = useForm();
   
   if (!schema) {
-    return <div className="text-center py-10">Form not found</div>;
+    return <div className="text-center py-10 text-gray-400">Form not found</div>;
   }
 
   const onSubmit = (data: any) => {
@@ -36,7 +36,7 @@ export default function DynamicForm() {
   const renderField = (field: FieldSchema) => {
     return (
       <div key={field.id} className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1">
           {field.label} {field.required && <span className="text-red-500">*</span>}
         </label>
         
@@ -48,12 +48,12 @@ export default function DynamicForm() {
             switch (field.ui) {
               case 'switch':
                 return (
-                   <div className="flex items-center">
+                   <div className="flex items-center h-12 px-4 rounded-xl border border-brand-border bg-brand-input">
                     <button
                       type="button"
                       onClick={() => onChange(!value)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        value ? 'bg-blue-600' : 'bg-gray-200'
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/50 ${
+                        value ? 'bg-brand-primary' : 'bg-gray-700'
                       }`}
                     >
                       <span
@@ -62,26 +62,29 @@ export default function DynamicForm() {
                         } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                       />
                     </button>
-                    <span className="ml-3 text-sm text-gray-500">{value ? 'Yes' : 'No'}</span>
+                    <span className="ml-3 text-sm text-gray-400">{value ? 'Yes' : 'No'}</span>
                   </div>
                 );
               case 'select':
                 return (
-                  <select
-                    className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                    onChange={onChange}
-                    value={value || ''}
-                  >
-                    <option value="">Select an option</option>
-                    {field.options?.map((opt, i) => (
-                      <option key={i} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                      <select
+                        className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-4 py-2 text-brand-text placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200 appearance-none"
+                        onChange={onChange}
+                        value={value || ''}
+                      >
+                        <option value="">Select an option...</option>
+                        {field.options?.map((opt, i) => (
+                          <option key={i} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      {/* Custom Arrow could go here */}
+                  </div>
                 );
                case 'textarea':
                 return (
                    <textarea
-                    className="flex min-h-[80px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    className="flex min-h-[120px] w-full rounded-xl border border-brand-border bg-brand-input px-4 py-3 text-brand-text placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
                     onChange={onChange}
                     value={value || ''}
                    />
@@ -98,7 +101,7 @@ export default function DynamicForm() {
             }
           }}
         />
-        {errors[field.name] && <p className="text-sm text-red-500">{errors[field.name]?.message as string}</p>}
+        {errors[field.name] && <p className="text-xs text-red-500 ml-1">{errors[field.name]?.message as string}</p>}
       </div>
     );
   };
@@ -110,17 +113,20 @@ export default function DynamicForm() {
           <ArrowLeft className="w-4 h-4 mr-2" />
            Back
         </Button>
-        <h1 className="text-2xl font-bold text-gray-900">{schema.name}</h1>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <Card className="bg-brand-surface border-brand-border overflow-hidden">
+        <div className="p-6 border-b border-brand-border bg-brand-surface">
+            <h1 className="text-2xl font-bold text-white">{schema.name}</h1>
+            <p className="text-gray-400 text-sm mt-1">Please fill in the details below.</p>
+        </div>
+        <CardContent className="p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {schema.fields.map(renderField)}
             
-            <div className="pt-4">
+            <div className="pt-6 border-t border-brand-border mt-8">
               <Button type="submit" className="w-full" size="lg">
-                <Check className="w-4 h-4 mr-2" />
+                <Check className="w-5 h-5 mr-2" />
                 Submit Entry
               </Button>
             </div>

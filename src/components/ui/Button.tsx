@@ -11,34 +11,31 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
-      const variants = {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm border-transparent',
-        secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 border-transparent',
-        danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm border-transparent',
-        ghost: 'bg-transparent text-gray-600 hover:bg-gray-100 border-transparent',
-        outline: 'bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50',
-      };
-      
-      const sizes = {
-        sm: 'px-3 py-1.5 text-sm',
-        md: 'px-4 py-2',
-        lg: 'px-6 py-3 text-lg',
-      };
-
-      return (
-        <button
-          ref={ref}
-          className={cn(
-            'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
-            variants[variant],
-            sizes[size],
-            className
-          )}
-          {...props}
-        />
-      );
-    }
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={cn(
+          'inline-flex items-center justify-center rounded-full font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-50 disabled:pointer-events-none active:scale-95',
+          {
+            'bg-brand-primary text-black hover:bg-brand-hover hover:text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]': variant === 'primary',
+            'bg-brand-surface text-brand-text hover:bg-brand-border border border-brand-border': variant === 'secondary',
+            'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20': variant === 'danger',
+            'hover:bg-brand-surface text-brand-text': variant === 'ghost',
+            'border-2 border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-black': variant === 'outline',
+            'h-8 px-3 text-xs': size === 'sm',
+            'h-10 px-6 py-2': size === 'md',
+            'h-12 px-8 text-lg': size === 'lg',
+          },
+          className
+        )}
+        {...props}
+      />
+    );
+  }
 );
+
 Button.displayName = 'Button';
+
+export { Button };

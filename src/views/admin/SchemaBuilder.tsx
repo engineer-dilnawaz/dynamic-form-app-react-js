@@ -1,26 +1,134 @@
 import { useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, type Control } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useSchemaStore } from '../../stores/useSchemaStore';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent } from '../../components/ui/Card';
-import { Trash2, Plus, GripVertical, ArrowLeft, Save } from 'lucide-react';
+import { Trash2, Plus, Save } from 'lucide-react';
 import type { CategorySchema, FieldType, UiType } from '../../types';
 
 interface SchemaFormValues {
   name: string;
   fields: {
-    id: string; // internal id for useFieldArray
+    id: string;
     name: string;
     label: string;
     type: FieldType;
     ui: UiType;
     required: boolean;
-    optionsString?: string; // helper for editing options
+    optionsString?: string;
   }[];
 }
+
+const TEMPLATES: Record<string, Partial<SchemaFormValues>> = {
+  vehicles: {
+    name: 'Vehicles',
+    fields: [
+      { id: uuidv4(), name: 'brand', label: 'Brand', type: 'string', ui: 'text', required: true },
+      { id: uuidv4(), name: 'model', label: 'Model', type: 'string', ui: 'text', required: true },
+      { id: uuidv4(), name: 'year', label: 'Year', type: 'number', ui: 'number', required: true, optionsString: '' },
+      { id: uuidv4(), name: 'is_electric', label: 'Electric?', type: 'boolean', ui: 'switch', required: false, optionsString: '' },
+    ]
+  },
+  clothes: {
+    name: 'Clothing',
+    fields: [
+      { id: uuidv4(), name: 'type', label: 'Type', type: 'string', ui: 'select', required: true, optionsString: 'Shirt, Pants, Jacket, Shoes' },
+      { id: uuidv4(), name: 'size', label: 'Size', type: 'string', ui: 'select', required: true, optionsString: 'S, M, L, XL' },
+      { id: uuidv4(), name: 'material', label: 'Material', type: 'string', ui: 'text', required: false },
+    ]
+  },
+  electronics: {
+    name: 'Electronics',
+    fields: [
+      { id: uuidv4(), name: 'device_name', label: 'Device Name', type: 'string', ui: 'text', required: true },
+      { id: uuidv4(), name: 'warranty_expiry', label: 'Warranty Expiry', type: 'date', ui: 'date', required: true },
+      { id: uuidv4(), name: 'price', label: 'Price ($)', type: 'number', ui: 'number', required: true },
+    ]
+  }
+};
+
+const FieldRow = ({ index, control, remove, register }: { index: number, control: Control<SchemaFormValues>, remove: (index: number) => void, register: any }) => {
+    const type = useWatch({ control, name: `fields.${index}.type` });
+
+    return (
+        <Card className="relative group border-brand-border/50 bg-brand-surface/50 hover:border-brand-border transition-colors">
+            <CardContent className="pt-6 pl-6 pr-12 grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="md:col-span-3">
+                    <Input
+                        label="Label"
+                        placeholder="Display Label"
+                        {...register(`fields.${index}.label` as const, { required: true })}
+                    />
+                </div>
+                <div className="md:col-span-3">
+                    <Input
+                        label="Property Name"
+                        placeholder="database_key"
+                        {...register(`fields.${index}.name` as const, { required: true })}
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1 mb-1 block">Type</label>
+                    <select
+                        {...register(`fields.${index}.type` as const)}
+                        className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-3 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all"
+                    >
+                        <option value="string">String</option>
+                        <option value="number">Number</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="date">Date</option>
+                        <option value="time">Time</option>
+                    </select>
+                </div>
+                <div className="md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1 mb-1 block">Widget</label>
+                    <select
+                        {...register(`fields.${index}.ui` as const)}
+                        className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-3 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all"
+                    >
+                        {type === 'number' && <option value="number">Number Input</option>}
+                        {type === 'boolean' && <option value="switch">Switch</option>}
+                        {type === 'date' && <option value="date">Date Picker</option>}
+                        {type === 'time' && <option value="time">Time Picker</option>}
+                        {type === 'string' && (
+                            <>
+                                <option value="text">Single Line</option>
+                                <option value="textarea">Multi Line</option>
+                                <option value="select">Dropdown</option>
+                            </>
+                        )}
+                         {!['number', 'boolean', 'date', 'time', 'string'].includes(type) && <option value="text">Text</option>}
+                    </select>
+                </div>
+                <div className="md:col-span-2 flex items-center pt-6">
+                    <label className="flex items-center space-x-2 text-sm text-gray-400 hover:text-white cursor-pointer transition-colors">
+                        <input type="checkbox" {...register(`fields.${index}.required` as const)} className="rounded border-brand-border bg-brand-input text-brand-primary focus:ring-brand-primary" />
+                        <span>Required</span>
+                    </label>
+                </div>
+
+                <div className="md:col-span-12">
+                     <Input
+                        label="Options (comma separated)"
+                        placeholder="Option 1, Option 2"
+                        {...register(`fields.${index}.optionsString` as const)}
+                    />
+                </div>
+            </CardContent>
+            <button
+                type="button"
+                onClick={() => remove(index)}
+                className="absolute right-4 top-4 p-2 rounded-lg text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+            >
+                <Trash2 className="w-5 h-5" />
+            </button>
+        </Card>
+    );
+};
+
 
 export default function SchemaBuilder() {
   const { id } = useParams();
@@ -28,7 +136,7 @@ export default function SchemaBuilder() {
   const { addSchema, updateSchema, getSchema } = useSchemaStore();
   const isEditMode = !!id;
 
-  const { control, register, handleSubmit, reset, formState: { errors } } = useForm<SchemaFormValues>({
+  const { control, register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SchemaFormValues>({
     defaultValues: {
       name: '',
       fields: []
@@ -54,6 +162,14 @@ export default function SchemaBuilder() {
       }
     }
   }, [isEditMode, id, getSchema, reset]);
+
+  const loadTemplate = (key: string) => {
+      const template = TEMPLATES[key];
+      if (template) {
+          setValue('name', template.name || '');
+          setValue('fields', template.fields || []);
+      }
+  };
 
   const onSubmit = (data: SchemaFormValues) => {
     const finalFields = data.fields.map(f => ({
@@ -82,125 +198,74 @@ export default function SchemaBuilder() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center space-x-4">
-        <Button variant="ghost" onClick={() => navigate('/admin')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-           Back
-        </Button>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {isEditMode ? 'Edit Category' : 'Create New Category'}
-        </h1>
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+         <div className="flex flex-col">
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            {isEditMode ? 'Edit Schema' : 'New Schema'}
+            </h1>
+            <p className="text-gray-400 mt-1">Define the data structure and UI widgets.</p>
+         </div>
+         
+         <div className="flex items-center space-x-4">
+             <Button variant="secondary" onClick={() => navigate('/admin')}>
+                Cancel
+             </Button>
+            <Button onClick={handleSubmit(onSubmit)}>
+                <Save className="w-5 h-5 mr-2" />
+                Save Schema
+            </Button>
+         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        <Card>
-          <CardContent className="pt-6">
-            <Input
-              label="Category Name"
-              placeholder="e.g. Employee Onboarding"
-              {...register('name', { required: 'Category name is required' })}
-              error={errors.name?.message}
+       <Card className="bg-brand-surface border-brand-border">
+          <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+             <Input
+                label="Category Name"
+                placeholder="e.g. Employee Profile"
+                {...register('name', { required: 'Category name is required' })}
+                error={errors.name?.message}
             />
+            
+             {!isEditMode && (
+                 <div className="space-y-1">
+                     <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1">Template</label>
+                     <select 
+                        onChange={(e) => loadTemplate(e.target.value)} 
+                        className="flex h-12 w-full rounded-xl border border-brand-border bg-brand-input px-4 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all"
+                        defaultValue=""
+                     >
+                         <option value="" disabled>Select a template...</option>
+                         <option value="vehicles">Vehicles</option>
+                         <option value="clothes">Clothing</option>
+                         <option value="electronics">Electronics</option>
+                     </select>
+                 </div>
+             )}
           </CardContent>
         </Card>
 
         <div className="space-y-4">
           <div className="flex justify-between items-center px-2">
-            <h2 className="text-lg font-semibold text-gray-800">Form Fields</h2>
-             <Button type="button" onClick={() => append({ id: uuidv4(), name: '', label: '', type: 'string', ui: 'text', required: false, optionsString: '' })}>
+            <h2 className="text-lg font-bold text-white uppercase tracking-wider">Fields Configuration</h2>
+             <Button type="button" variant="secondary" size="sm" onClick={() => append({ id: uuidv4(), name: '', label: '', type: 'string', ui: 'text', required: false, optionsString: '' })}>
               <Plus className="w-4 h-4 mr-2" />
               Add Field
             </Button>
           </div>
 
-          {fields.map((field, index) => (
-            <Card key={field.id} className="relative group">
-               <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-300 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
-                <GripVertical className="w-5 h-5" />
-              </div>
-              <CardContent className="pt-6 pl-10 pr-12 grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-3">
-                   <Input 
-                    label="Label" 
-                    placeholder="Display Label"
-                    {...register(`fields.${index}.label` as const, { required: true })} 
-                   />
-                </div>
-                 <div className="md:col-span-3">
-                   <Input 
-                    label="Property Name" 
-                    placeholder="database_key"
-                    {...register(`fields.${index}.name` as const, { required: true })} 
-                   />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select 
-                    {...register(`fields.${index}.type` as const)}
-                    className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="string">String</option>
-                    <option value="number">Number</option>
-                    <option value="boolean">Boolean</option>
-                    <option value="date">Date</option>
-                    <option value="time">Time</option>
-                  </select>
-                </div>
-                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">UI</label>
-                   <select 
-                    {...register(`fields.${index}.ui` as const)}
-                    className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="text">Input</option>
-                    <option value="textarea">Textarea</option>
-                    <option value="number">Number Input</option>
-                    <option value="switch">Switch</option>
-                    <option value="date">Date Picker</option>
-                    <option value="select">Dropdown</option>
-                  </select>
-                </div>
-                 <div className="md:col-span-2 flex items-center pt-6">
-                    <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                      <input type="checkbox" {...register(`fields.${index}.required` as const)} className="rounded text-blue-600 focus:ring-blue-500" />
-                      <span>Required</span>
-                    </label>
-                </div>
-                
-                 {/* Options input if type is select */}
-                 <div className="md:col-span-12">
-                   <Input 
-                    label="Options (comma separated, for Dropdown)" 
-                    placeholder="Option 1, Option 2"
-                    {...register(`fields.${index}.optionsString` as const)} 
-                   />
-                 </div>
-              </CardContent>
-              <button 
-                type="button"
-                onClick={() => remove(index)}
-                className="absolute right-4 top-4 text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </Card>
-          ))}
+          <div className="space-y-4">
+            {fields.map((field, index) => (
+                <FieldRow key={field.id} index={index} control={control} remove={remove} register={register} />
+            ))}
+          </div>
           
            {fields.length === 0 && (
-             <div className="text-center py-8 text-gray-500 italic bg-gray-50 rounded-lg border border-dashed text-sm">
-                No fields added yet. Click "Add Field" to start.
+             <div className="text-center py-12 text-gray-500 rounded-xl border-2 border-dashed border-brand-border/50 bg-brand-surface/30">
+                No fields added. Start by using a template or adding a custom field.
              </div>
            )}
         </div>
-
-        <div className="flex justify-end pt-4">
-          <Button type="submit" size="lg">
-            <Save className="w-5 h-5 mr-2" />
-            Save Category
-          </Button>
-        </div>
-      </form>
     </div>
   );
 }

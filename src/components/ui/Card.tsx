@@ -6,18 +6,21 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-xl border border-gray-200 bg-white text-gray-950 shadow-sm', className)}
+      className={cn(
+        'rounded-2xl border border-brand-border bg-brand-surface text-brand-text shadow-sm',
+        className
+      )}
       {...props}
     />
   )
 );
 Card.displayName = 'Card';
 
-export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
@@ -28,20 +31,22 @@ export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
 );
 CardHeader.displayName = 'CardHeader';
 
-export const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingElement>>(
+const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('font-semibold leading-none tracking-tight text-xl', className)}
+      className={cn('font-semibold leading-none tracking-tight text-white', className)}
       {...props}
     />
   )
 );
 CardTitle.displayName = 'CardTitle';
 
-export const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
   )
 );
 CardContent.displayName = 'CardContent';
+
+export { Card, CardHeader, CardTitle, CardContent };

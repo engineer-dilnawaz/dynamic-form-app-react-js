@@ -1,1 +1,18 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+  
+  body {
+    @apply bg-brand-dark text-brand-text transition-colors duration-200 antialiased;
+  }
+  
+  /* Force dark mode by default for this theme */
+  html {
+     color-scheme: dark;
+  }
+}

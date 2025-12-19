@@ -1,76 +1,137 @@
-import { BrowserRouter, Routes, Route, Link, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Outlet, useLocation } from 'react-router-dom';
 import AdminDashboard from './views/admin/Dashboard';
 import SchemaBuilder from './views/admin/SchemaBuilder';
 import UserDashboard from './views/user/Dashboard';
 import DynamicForm from './views/user/DynamicForm';
 import EntriesViewer from './views/user/EntriesViewer';
-import { Shield, User } from 'lucide-react';
+import { Shield, User, LayoutGrid, FileText } from 'lucide-react';
 
-const Home = () => (
-  <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 space-y-12">
-    <div className="text-center space-y-4">
-      <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight">Dynamic Form Builder</h1>
-      <p className="text-lg text-gray-500 max-w-lg mx-auto">
-        Create custom forms with the Admin Builder, then switch to User mode to fill them out.
-      </p>
-    </div>
+// Shared Sidebar/Header could be extracted, but keeping inline for simplicity in this artifact
+const NavLink = ({ to, icon: Icon, children }: { to: string, icon: any, children: React.ReactNode }) => {
+    const location = useLocation();
+    const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
     
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl px-4">
-      <Link to="/admin" className="relative p-10 bg-white border border-gray-200 rounded-2xl hover:shadow-xl transition-all duration-300 group overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <div className="relative flex flex-col items-center text-center space-y-4">
-          <div className="p-4 bg-blue-100 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-colors">
-            <Shield className="w-8 h-8 text-blue-600 group-hover:text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-800">Admin</h2>
-          <p className="text-gray-500">Design schemas, manage categories, and configure field types.</p>
-        </div>
-      </Link>
-      
-      <Link to="/user" className="relative p-10 bg-white border border-gray-200 rounded-2xl hover:shadow-xl transition-all duration-300 group overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <div className="relative flex flex-col items-center text-center space-y-4">
-           <div className="p-4 bg-green-100 rounded-full group-hover:bg-green-600 group-hover:text-white transition-colors">
-            <User className="w-8 h-8 text-green-600 group-hover:text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-800">User</h2>
-          <p className="text-gray-500">Browse available forms, fill entries, and view submissions.</p>
-        </div>
-      </Link>
-    </div>
-  </div>
-);
+    return (
+        <Link to={to} className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive ? 'bg-brand-primary/10 text-brand-primary' : 'text-gray-400 hover:text-white hover:bg-brand-surface'}`}>
+            <Icon className="w-5 h-5" />
+            <span className="font-medium">{children}</span>
+        </Link>
+    );
+};
 
 const AdminLayout = () => (
-  <div className="min-h-screen bg-gray-50">
-    <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-         <div className="flex items-center space-x-2">
-            <Shield className="w-6 h-6 text-blue-600" />
-            <span className="font-bold text-xl text-gray-900">Admin Console</span>
+  <div className="min-h-screen flex bg-brand-dark">
+     {/* Sidebar */}
+    <div className="w-64 border-r border-brand-border p-6 flex flex-col hidden md:flex">
+         <div className="flex items-center space-x-2 px-4 mb-10">
+            <div className="w-8 h-8 bg-brand-primary rounded flex items-center justify-center">
+                <Shield className="w-5 h-5 text-black" />
+            </div>
+            <span className="font-bold text-xl text-white tracking-tight">SchemaBuilder</span>
          </div>
-         <Link to="/" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Sign Out</Link>
-      </div>
+         
+         <nav className="flex-1 space-y-2">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-4 mb-4">Management</div>
+            <NavLink to="/admin" icon={LayoutGrid}>Dashboard</NavLink>
+         </nav>
+
+         <div className="mt-auto pt-6 border-t border-brand-border">
+            <Link to="/" className="flex items-center space-x-3 px-4 py-2 text-gray-400 hover:text-white transition-colors">
+                <span className="text-sm">Main Menu</span>
+            </Link>
+         </div>
     </div>
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Outlet />
+    
+    <div className="flex-1 flex flex-col">
+        {/* Mobile Header */}
+        <div className="md:hidden h-16 border-b border-brand-border flex items-center justify-between px-4 bg-brand-dark">
+             <span className="font-bold text-white">SchemaBuilder</span>
+             <Link to="/" className="text-sm text-gray-400">Exit</Link>
+        </div>
+
+        <main className="flex-1 p-6 md:p-12 overflow-y-auto">
+            <Outlet />
+        </main>
     </div>
   </div>
 );
 
 const UserLayout = () => (
-   <div className="min-h-screen bg-gray-50">
-    <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <User className="w-6 h-6 text-green-600" />
-            <span className="font-bold text-xl text-gray-900">User Portal</span>
+   <div className="min-h-screen flex bg-brand-dark">
+    {/* Sidebar */}
+    <div className="w-64 border-r border-brand-border p-6 flex flex-col hidden md:flex">
+         <div className="flex items-center space-x-2 px-4 mb-10">
+            <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-black" />
+            </div>
+            <span className="font-bold text-xl text-white tracking-tight">FormUser</span>
          </div>
-         <Link to="/" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Sign Out</Link>
-      </div>
+         
+         <nav className="flex-1 space-y-2">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-4 mb-4">Portal</div>
+            <NavLink to="/user" icon={LayoutGrid}>Dashboard</NavLink>
+            <NavLink to="/user/entries" icon={FileText}>My Entries</NavLink>
+         </nav>
+
+         <div className="mt-auto pt-6 border-t border-brand-border">
+            <Link to="/" className="flex items-center space-x-3 px-4 py-2 text-gray-400 hover:text-white transition-colors">
+                <span className="text-sm">Main Menu</span>
+            </Link>
+         </div>
     </div>
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Outlet />
+
+    <div className="flex-1 flex flex-col">
+         {/* Mobile Header */}
+        <div className="md:hidden h-16 border-b border-brand-border flex items-center justify-between px-4 bg-brand-dark">
+             <span className="font-bold text-white">FormUser</span>
+             <Link to="/" className="text-sm text-gray-400">Exit</Link>
+        </div>
+        
+        <main className="flex-1 p-6 md:p-12 overflow-y-auto">
+            <Outlet />
+        </main>
+    </div>
+  </div>
+);
+
+const Home = () => (
+  <div className="flex flex-col items-center justify-center min-h-screen bg-brand-dark relative overflow-hidden">
+    {/* Background Glow */}
+    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-brand-primary/10 blur-[120px] rounded-full pointer-events-none" />
+
+    <div className="relative z-10 text-center space-y-6 max-w-2xl px-6">
+      <div className="inline-flex items-center justify-center p-3 bg-brand-surface rounded-2xl border border-brand-border mb-4 shadow-2xl">
+         <span className="text-brand-primary font-bold tracking-widest uppercase text-sm">Dynamic Engine v2.0</span>
+      </div>
+      
+      <h1 className="text-6xl font-extrabold text-white tracking-tight leading-tight">
+        Build Forms <span className="text-brand-primary">Faster</span>.
+      </h1>
+      <p className="text-xl text-gray-400">
+        The advanced schema builder for modern applications. Define data structures and generate UIs instantly.
+      </p>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-8">
+        <Link to="/admin" className="group relative p-8 bg-brand-surface border border-brand-border rounded-2xl hover:border-brand-primary/50 transition-all hover:-translate-y-1">
+            <div className="absolute top-4 right-4 text-brand-border group-hover:text-brand-primary transition-colors">
+                <Shield className="w-6 h-6" />
+            </div>
+            <div className="text-left">
+                <div className="text-2xl font-bold text-white mb-2">Admin</div>
+                <p className="text-sm text-gray-500">Schema Management</p>
+            </div>
+        </Link>
+        
+        <Link to="/user" className="group relative p-8 bg-brand-surface border border-brand-border rounded-2xl hover:border-brand-primary/50 transition-all hover:-translate-y-1">
+             <div className="absolute top-4 right-4 text-brand-border group-hover:text-brand-primary transition-colors">
+                <User className="w-6 h-6" />
+            </div>
+            <div className="text-left">
+                <div className="text-2xl font-bold text-white mb-2">User Portal</div>
+                <p className="text-sm text-gray-500">Form Submission</p>
+            </div>
+        </Link>
+      </div>
     </div>
   </div>
 );

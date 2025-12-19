@@ -1,62 +1,117 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+
 import { useEntryStore } from '../../stores/useEntryStore';
 import { useSchemaStore } from '../../stores/useSchemaStore';
 import { Button } from '../../components/ui/Button';
-import { ArrowLeft } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
+import { X, Eye, FileText } from 'lucide-react';
 
 export default function EntriesViewer() {
   const { entries } = useEntryStore();
-  const { getSchema } = useSchemaStore();
-  const navigate = useNavigate();
+  const { schemas, getSchema } = useSchemaStore();
 
-  // Simple sorting by date desc
-  const sortedEntries = [...entries].sort((a, b) => 
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterDate, setFilterDate] = useState<string>('');
+
+  const filteredEntries = entries.filter((entry) => {
+      const matchCategory = filterCategory === 'all' || entry.categoryId === filterCategory;
+      const matchDate = !filterDate || entry.submittedAt.startsWith(filterDate);
+      return matchCategory && matchDate;
+  });
+
+  const sortedEntries = [...filteredEntries].sort((a, b) => 
     new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
   );
 
   return (
-    <div className="space-y-6">
-       <div className="flex items-center space-x-4">
-        <Button variant="ghost" onClick={() => navigate('/user')}>
-             {/* Note: navigate needs hook, realized I missed it, fixing below */}
-             <Link to="/user" className="flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-             </Link>
-        </Button>
-        <h1 className="text-3xl font-bold text-gray-900">My Submissions</h1>
+    <div className="space-y-8">
+       <div className="flex items-center justify-between">
+           <div className="flex flex-col">
+                <h1 className="text-3xl font-bold text-white tracking-tight">Entries</h1>
+                <p className="text-gray-400 mt-1">View and filter form submissions.</p>
+           </div>
       </div>
 
-      {sortedEntries.length === 0 ? (
-         <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-          <p className="text-gray-500">No entries submitted yet.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {sortedEntries.map((entry) => {
-            const schema = getSchema(entry.categoryId);
-            return (
-              <div key={entry.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-blue-600">{schema?.name || 'Unknown Form'}</h3>
-                    <p className="text-sm text-gray-400">{new Date(entry.submittedAt).toLocaleString()}</p>
+      {/* Filters */}
+      <Card className="p-1 bg-brand-surface border-brand-border">
+          <div className="flex flex-col md:flex-row gap-4 p-4 items-end">
+              <div className="w-full md:w-1/3">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1 mb-1 block">Form Type</label>
+                  <div className="relative">
+                      <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <select
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="flex h-10 w-full rounded-xl border border-brand-border bg-brand-input pl-10 pr-3 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all appearance-none"
+                      >
+                          <option value="all">All Forms</option>
+                          {schemas.map(s => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                      </select>
                   </div>
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                    ID: {entry.id.slice(0, 8)}
-                  </span>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                  <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                    {JSON.stringify(entry.data, null, 2)}
-                  </pre>
-                </div>
               </div>
-            );
-          })}
+              <div className="w-full md:w-1/3">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1 mb-1 block">Date</label>
+                  <input 
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-brand-border bg-brand-input px-3 py-2 text-brand-text text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary focus:outline-none transition-all"
+                  />
+              </div>
+              <div className="w-full md:w-auto pb-[1px]">
+                  <Button variant="secondary" onClick={() => { setFilterCategory('all'); setFilterDate(''); }} className="w-full md:w-auto">
+                      <X className="w-4 h-4 mr-2" />
+                      Clear Filter
+                  </Button>
+              </div>
+          </div>
+      </Card>
+
+      {/* Results */}
+        <div className="grid grid-cols-1 gap-4">
+          {sortedEntries.length === 0 ? (
+            <div className="text-center py-16 bg-brand-surface/30 rounded-2xl border border-dashed border-brand-border">
+                <p className="text-gray-500">No entries found matching filters.</p>
+            </div>
+          ) : (
+             <div className="bg-brand-surface rounded-2xl border border-brand-border overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-brand-surface border-b border-brand-border">
+                        <tr>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Form Name</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date Submitted</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-brand-border">
+                        {sortedEntries.map((entry) => {
+                            const schema = getSchema(entry.categoryId);
+                            return (
+                                <tr key={entry.id} className="hover:bg-brand-border/30 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+                                            Success
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-medium text-white">{schema?.name || 'Unknown'}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-400">{new Date(entry.submittedAt).toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <Button variant="ghost" size="sm" onClick={() => alert(JSON.stringify(entry.data, null, 2))}>
+                                            <Eye className="w-4 h-4 mr-2" />
+                                            View Data
+                                        </Button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+             </div>
+          )}
         </div>
-      )}
     </div>
   );
 }
