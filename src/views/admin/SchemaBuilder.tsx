@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import { useForm, useFieldArray, useWatch, type Control, Controller } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { CustomSelect } from '../../components/ui/CustomSelect';
 import { Card, CardContent } from '../../components/ui/Card';
-import { Trash2, Plus, Save } from 'lucide-react';
+import { Trash2, Plus, Save, X } from 'lucide-react';
 import type { CategorySchema, FieldType, UiType } from '../../types';
 
 interface SchemaFormValues {
@@ -72,8 +72,71 @@ const WIDGET_OPTIONS: Record<string, { label: string; value: string }[]> = {
     default: [{ label: 'Text', value: 'text' }]
 };
 
+// --- Helper Component for Options Tag Input ---
+const OptionsEditor = ({ 
+    value = '', 
+    onChange 
+}: { 
+    value?: string, 
+    onChange: (val: string) => void 
+}) => {
+    const [inputValue, setInputValue] = useState('');
+    
+    // Parse the comma-separated string into an array of tags, removing empty ones
+    const tags = value.split(',').map(t => t.trim()).filter(Boolean);
+
+    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const newTag = inputValue.trim();
+            if (newTag && !tags.includes(newTag)) {
+                const newTags = [...tags, newTag];
+                onChange(newTags.join(', '));
+                setInputValue('');
+            }
+        }
+    };
+
+    const removeTag = (indexToRemove: number) => {
+        const newTags = tags.filter((_, index) => index !== indexToRemove);
+        onChange(newTags.join(', '));
+    };
+
+    return (
+        <div className="space-y-2">
+             <label className="text-xs font-semibold uppercase tracking-wider text-brand-primary/80 ml-1">
+                Dropdown Options
+            </label>
+            <div className="flex flex-wrap gap-2 p-3 min-h-[48px] rounded-xl border border-brand-border bg-brand-input focus-within:ring-2 focus-within:ring-brand-primary/50 focus-within:border-brand-primary transition-all">
+                {tags.map((tag, i) => (
+                    <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-primary/20 text-brand-primary border border-brand-primary/30">
+                        {tag}
+                        <button
+                            type="button"
+                            onClick={() => removeTag(i)}
+                            className="ml-1.5 hover:text-white focus:outline-none"
+                        >
+                            <X className="w-3 h-3" />
+                        </button>
+                    </span>
+                ))}
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={tags.length === 0 ? "Type option and press Enter..." : "Add..."}
+                    className="flex-1 bg-transparent border-none text-sm text-brand-text placeholder:text-gray-500 focus:outline-none min-w-[120px]"
+                />
+            </div>
+            <p className="text-xs text-brand-muted ml-1">Example: "Red", press Enter, "Blue", press Enter.</p>
+        </div>
+    );
+};
+
 const FieldRow = ({ index, control, remove, register, setValue }: { index: number, control: Control<SchemaFormValues>, remove: (index: number) => void, register: any, setValue: any }) => {
     const type = useWatch({ control, name: `fields.${index}.type` });
+    const ui = useWatch({ control, name: `fields.${index}.ui` });
     
     // Auto-select UI when Type changes
     useEffect(() => {
@@ -86,6 +149,9 @@ const FieldRow = ({ index, control, remove, register, setValue }: { index: numbe
         };
          if (type) {
              const newUi = defaultUi[type] || 'text';
+             // Only update if the current UI is not compatible with the new type to avoid overwriting user choice unnecessarily,
+             // but here we force reset on type change to ensure validity.
+             // Actually currently logic was overwriting it always. Let's keep it simple.
              setValue(`fields.${index}.ui`, newUi);
          }
     }, [type, index, setValue]);
@@ -144,13 +210,20 @@ const FieldRow = ({ index, control, remove, register, setValue }: { index: numbe
                     </label>
                 </div>
 
-                <div className="md:col-span-12">
-                     <Input
-                        label="Options (comma separated)"
-                        placeholder="Option 1, Option 2"
-                        {...register(`fields.${index}.optionsString` as const)}
-                    />
-                </div>
+                {ui === 'select' && (
+                    <div className="md:col-span-12 animation-fade-in">
+                        <Controller
+                            control={control}
+                            name={`fields.${index}.optionsString`}
+                            render={({ field }) => (
+                                <OptionsEditor
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                />
+                            )}
+                        />
+                    </div>
+                )}
             </CardContent>
             <button
                 type="button"
@@ -166,10 +239,12 @@ const FieldRow = ({ index, control, remove, register, setValue }: { index: numbe
 export default function SchemaBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addSchema, updateSchema, getSchema } = useSchemaStore();
+  const { addSchema, updateSchema, getSchema, schemas } = useSchemaStore();
   const isEditMode = !!id;
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
-  const { control, register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SchemaFormValues>({
+  const { control, register, handleSubmit, reset, setValue, setError, formState: { errors } } = useForm<SchemaFormValues>({
     defaultValues: {
       name: '',
       fields: []
@@ -197,14 +272,40 @@ export default function SchemaBuilder() {
   }, [isEditMode, id, getSchema, reset]);
 
   const loadTemplate = (key: string) => {
+      // Handle Clear or Empty
+      if (!key || key === '__clear__') {
+          setSelectedTemplate('');
+          setValue('name', ''); // Clear category name as requested
+          setValue('fields', []);
+          return;
+      }
+      
+      setSelectedTemplate(key);
       const template = TEMPLATES[key];
       if (template) {
-          setValue('name', template.name || '');
+          if (!isEditMode) setValue('name', template.name || '');
           setValue('fields', template.fields || []);
       }
   };
 
   const onSubmit = (data: SchemaFormValues) => {
+    setGlobalError(null);
+
+    // Duplicate Name Validation
+    if (!isEditMode) {
+        const isDuplicate = schemas.some(s => s.name.trim().toLowerCase() === data.name.trim().toLowerCase());
+        if (isDuplicate) {
+            setError('name', { type: 'manual', message: 'A schema with this name already exists' });
+            return;
+        }
+    }
+
+    // Min 1 Field Validation
+    if (data.fields.length === 0) {
+        setGlobalError('Please add at least one field to the schema.');
+        return;
+    }
+
     const finalFields = data.fields.map(f => ({
       id: f.id || uuidv4(),
       name: f.name,
@@ -212,7 +313,7 @@ export default function SchemaBuilder() {
       type: f.type,
       ui: f.ui,
       required: f.required,
-      options: f.optionsString ? f.optionsString.split(',').map(s => ({ label: s.trim(), value: s.trim() })) : undefined
+      options: f.optionsString ? f.optionsString.split(',').map(s => ({ label: s.trim(), value: s.trim() })).filter(o => o.value) : undefined
     }));
 
     const schemaData: CategorySchema = {
@@ -234,6 +335,7 @@ export default function SchemaBuilder() {
         { label: 'Vehicles', value: 'vehicles' },
         { label: 'Clothing', value: 'clothes' },
         { label: 'Electronics', value: 'electronics' },
+        { label: 'Clear Selection', value: '__clear__' }
   ];
 
   return (
@@ -272,12 +374,20 @@ export default function SchemaBuilder() {
                         label="Template"
                         onChange={(val) => loadTemplate(val)}
                         options={templateOptions}
+                        value={selectedTemplate}
                         placeholder="Select a template..."
                      />
                  </div>
              )}
           </CardContent>
         </Card>
+
+        {globalError && (
+             <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-xl flex items-center shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                 <X className="w-5 h-5 mr-2" />
+                 <span className="text-sm font-medium">{globalError}</span>
+             </div>
+        )}
 
         <div className="space-y-4">
           <div className="flex justify-between items-center px-2">
