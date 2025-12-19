@@ -203,11 +203,28 @@ const FieldRow = ({ index, control, remove, register, setValue }: { index: numbe
                         )}
                     />
                 </div>
-                <div className="md:col-span-2 flex flex-col justify-end pb-3">
-                    <label className="flex items-center space-x-2 text-sm text-gray-400 hover:text-white cursor-pointer transition-colors">
-                        <input type="checkbox" {...register(`fields.${index}.required` as const)} className="rounded border-brand-border bg-brand-input text-brand-primary focus:ring-brand-primary w-5 h-5" />
-                        <span>Required</span>
-                    </label>
+                <div className="md:col-span-2 flex flex-col justify-end h-[88px] pb-3">
+                    <Controller
+                        control={control}
+                        name={`fields.${index}.required`}
+                        render={({ field: { onChange, value } }) => (
+                            <label className="flex items-center space-x-3 cursor-pointer group">
+                                <div className="relative">
+                                    <input 
+                                        type="checkbox" 
+                                        className="sr-only" 
+                                        checked={value} 
+                                        onChange={onChange}
+                                    />
+                                    <div className={`block w-10 h-6 rounded-full transition-colors ${value ? 'bg-brand-primary' : 'bg-gray-700 group-hover:bg-gray-600'}`}></div>
+                                    <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${value ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                                </div>
+                                <span className={`text-sm font-medium transition-colors ${value ? 'text-brand-primary' : 'text-gray-400 group-hover:text-white'}`}>
+                                    Required
+                                </span>
+                            </label>
+                        )}
+                    />
                 </div>
 
                 {ui === 'select' && (
