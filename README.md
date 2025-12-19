@@ -1,209 +1,247 @@
 ## 🏗 Project Goal
 
-Build a **Next.js + Supabase application** where:
+Build a **frontend-only React/Next.js application** where:
 
 * **Admin users can create categories**
-  (e.g., Vehicles, Clothes, Electronics)
+  (ex: Vehicles, Clothes, Electronics)
 * **Admin defines dynamic form schema**
   by adding multiple properties:
 
-  * Property Name (string)
+  * Property Name
   * Data Type: `string | number | boolean | date | time`
-  * UI Type: `text_input | date_picker | time_picker | toggle | dropdown`
-  * Options (for dropdown values, optional)
-* **Users can fill forms based on the schema**
-* Each user submission is stored as structured JSON
+  * UI Type: `text_input | number_input | date_picker | time_picker | toggle | dropdown`
+  * Options array for dropdown
+* **Users can fill forms based on that schema**
+* All data is stored **locally in browser storage (LocalStorage)** using Zustand for state persistence.
 
-No custom backend — use **Supabase DB, Auth, and RLS**.
+No backend required in MVP.
+
+Later we can replace LocalStorage with Supabase.
 
 ---
 
 ## 🧱 Tech Stack
 
-* **Next.js App Router**
-* **Supabase JS Client**
-* **React Hook Form**
-* **Shadcn/UI**
-* **TypeScript**
-* **Zustand (optional)**
+* **React or Next.js**
+* **Zustand (global state + persistence)**
+* **React Hook Form (dynamic form engine)**
 * **TailwindCSS**
+* **Shadcn/UI Components (recommended)**
+* **TypeScript**
 
 ---
 
-## 👥 User Roles
+## 🎯 Core Principles
+
+* 100% frontend
+* No authentication needed yet
+* Data persists using LocalStorage automatically
+* Admin UI updates schema stored locally
+* User UI renders dynamic inputs based on schema
+
+---
+
+## 👥 Roles (Simulated)
+
+We simulate roles:
 
 ### Admin:
 
-* Create categories
-* Add properties to categories
-* Edit or reorder fields
-* Preview form
-* Publish schema
+* Can add / edit categories
+* Can define properties per category
+* Can reorder fields (optional)
+* Can preview form
 
-### End User:
+### User:
+
+* Choose category
+* Fill form
+* Submit data
+* View their submitted entries
+
+No login required — we assume admin mode is a separate route.
+
+---
+
+## 🗄 Local Data Model (Frontend State Only)
+
+### Category
+
+```ts
+interface Category {
+  id: string
+  name: string
+}
+```
+
+### Property
+
+```ts
+interface Property {
+  id: string
+  categoryId: string
+  label: string
+  dataType: "string" | "number" | "boolean" | "date" | "time"
+  uiType: "text" | "number" | "toggle" | "date" | "time" | "select"
+  options?: string[]
+  orderIndex: number
+}
+```
+
+### Entry
+
+```ts
+interface Entry {
+  id: string
+  categoryId: string
+  values: Record<string, any>
+  createdAt: number
+}
+```
+
+---
+
+## 🪝 Zustand Store Requirements
+
+Create separate stores:
+
+### `/stores/categories.ts`
+
+* addCategory
+* removeCategory
+* load/save from LocalStorage
+
+### `/stores/properties.ts`
+
+* addProperty
+* updateProperty
+* deleteProperty
+* reorderProperties
+* load/save from LocalStorage
+
+### `/stores/entries.ts`
+
+* addEntry
+* deleteEntry
+* load/save from LocalStorage
+
+Use `zustand/middleware` → `persist()`.
+
+---
+
+## 📍 App Routes / Screens
+
+### Admin Views
+
+```
+/admin/categories
+```
+
+* Add Category
+* List Categories
+
+```
+/admin/categories/:id
+```
+
+* Add/edit properties for that category
+* Fields:
+
+  * label
+  * data type
+  * ui type
+* Options array input for dropdown
+
+```
+/admin/categories/:id/preview
+```
+
+* Render form UI using RHF
+
+### User Views
+
+```
+/user
+```
 
 * Select category
-* Auto-render form
-* Submit data
-* View submissions
-
----
-
-## 🗄 Database Schema (Supabase)
-
-### `categories`
-
-| column     | type           |
-| ---------- | -------------- |
-| id (pk)    | uuid           |
-| name       | text           |
-| created_by | uuid (FK user) |
-| created_at | timestamp      |
-
-### `properties`
-
-| column      | type    |
-| ----------- | ------- |
-| id (pk)     | uuid    |
-| category_id | uuid FK |
-| label       | text    |
-| data_type   | text    |
-| ui_type     | text    |
-| options     | jsonb   |
-| order_index | int     |
-
-### `entries`
-
-| column      | type      |
-| ----------- | --------- |
-| id (pk)     | uuid      |
-| category_id | uuid      |
-| user_id     | uuid      |
-| values      | jsonb     |
-| created_at  | timestamp |
-
----
-
-## 🔐 Supabase Auth Rules
-
-* Admin role stored in `auth.users`.
-* Only Admins can:
-
-  * insert into `categories`
-  * insert/update/delete `properties`
-* All logged-in users can insert into `entries`
-* Users can only view their own entries
-
-RLS sample policy:
+* Go to dynamic form
 
 ```
-(using auth.role() = 'admin')
+/user/:categoryId/form
 ```
+
+* Render RHF form
+* On submit → save Entry to LocalStorage
+
+```
+/user/entries
+```
+
+* List stored entries
 
 ---
 
-## 🖥 Pages to Build
+## 🧩 Dynamic Form Rendering
 
-### `/login`
+Use `React Hook Form` + `Controller`.
 
-* Authentication
-* Supabase Auth UI
+Map properties to UI components:
 
-### `/admin/categories`
-
-* List categories
-* Add Category Modal
-
-### `/admin/categories/[id]`
-
-* Manage properties UI
-* Add property
-* Reorder list
-
-### `/admin/categories/[id]/preview`
-
-* Render form preview
-
-### `/user`
-
-* Choose Category
-* Load dynamic form
-* Submit
-
-### `/user/entries`
-
-* List user submissions
+| uiType | Component                 |
+| ------ | ------------------------- |
+| text   | `<input type="text" />`   |
+| number | `<input type="number" />` |
+| toggle | `<Switch />`              |
+| date   | `<input type="date" />`   |
+| time   | `<input type="time" />`   |
+| select | `<Select options />`      |
 
 ---
 
-## 🧩 Dynamic Form Rules
+## 🎨 UI Guidelines using Tailwind + Shadcn
 
-Rendering logic based on `ui_type`:
-
-| ui_type     | Component     |
-| ----------- | ------------- |
-| text_input  | `<input />`   |
-| date_picker | date selector |
-| time_picker | time selector |
-| toggle      | `<Switch />`  |
-| dropdown    | `<Select />`  |
-
-Use **React Hook Form + Controller**.
-
----
-
-## 📦 State Management
-
-Optional global store:
-
-```
-zustand/categories-store
-zustand/user-store
-```
+* Use Cards for groups
+* Use Dialog for modals
+* Use Select for dropdown type fields
+* Buttons should be clear: Add, Save, Delete
 
 ---
 
 ## 🧪 MVP Tasks for Agent
 
-1. Initialize Next.js + Supabase.
-2. Add Auth page.
-3. Create DB tables via SQL migration.
-4. Implement Admin Category CRUD.
-5. Implement Admin Property Builder UI.
-6. Render User Dynamic Form based on schema.
-7. Submit JSON values.
-8. Display entries list.
+1. Initialize project with Tailwind + Zustand.
+2. Build LocalStorage persistence wrapper.
+3. Implement Categories Store + screen.
+4. Implement Properties Store + screen.
+5. Render dynamic form from property schema.
+6. Store user entries locally.
+7. Render entries list.
+8. Style using Tailwind.
 
 ---
 
-## 🛠 Future Enhancements
+## 🛠 Future Upgrade Path
 
-* Drag-and-drop ordering
-* Default values
-* Templates
-* Export schema JSON
-* Public sharing
-* Mobile app (React Native)
+Later integrate Supabase:
 
----
+* Replace Categories LocalStorage → categories table
+* Replace Properties LocalStorage → properties table
+* Replace Entries LocalStorage → JSON column
+* Add user authentication
+* Add Row-Level Security
 
-## 📝 Notes for Agent
-
-* Prioritize clean TypeScript types.
-* Use server actions for secure DB ops.
-* Use async/await everywhere.
-* UI first → backend config after.
-* Follow atomic commits.
+No UI changes required.
 
 ---
 
 ## ✔ Acceptance Criteria
 
-* Admin can define any schema
-* User form updates dynamically
-* Data saved properly in Supabase
-* Role protection is enforced
-
----
+* Admin can create category
+* Admin can define schema fields
+* Schema persists across refresh
+* User can fill forms dynamically
+* Entries saved in LocalStorage
+* Entries viewable
 
 
