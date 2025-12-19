@@ -81,11 +81,14 @@ export default function DynamicForm() {
                 );
                case 'textarea':
                 return (
-                   <textarea
-                    className="flex min-h-[120px] w-full rounded-xl border border-brand-border bg-brand-input px-4 py-3 text-brand-text placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
-                    onChange={onChange}
-                    value={value || ''}
-                   />
+                   <div className="w-full space-y-1">
+                      <textarea
+                        className="flex min-h-[120px] w-full rounded-xl border border-brand-border bg-brand-input px-4 py-3 text-brand-text placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200"
+                        onChange={onChange}
+                        value={value || ''}
+                      />
+                      {errors[field.name] && <p className="text-xs text-red-500 ml-1">{errors[field.name]?.message as string}</p>}
+                   </div>
                 );
               default: // text, number, date, time
                 return (
@@ -99,7 +102,6 @@ export default function DynamicForm() {
             }
           }}
         />
-        {errors[field.name] && <p className="text-xs text-red-500 ml-1">{errors[field.name]?.message as string}</p>}
       </div>
     );
   };
